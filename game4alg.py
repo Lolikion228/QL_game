@@ -184,18 +184,25 @@ def run_experiment(render=False, verbose=False):
     ep_traps = []
     ep_energy = []
 
-    for i in tqdm(range(episodes_cnt)):
-        episode_reward, moves, traps, energy = run_episode(render=render, interval=0.01)
-        if verbose:
+    if verbose:
+        for i in range(episodes_cnt):
+            episode_reward, moves, traps, energy = run_episode(render=render, interval=0.01)
             print(f'----------------episode_{i+1}-----------------  ')
             print(f'    Reward: {episode_reward}')
             print(f'    Moves: {moves}')
             print(f'    Traps: {traps}')
             print(f'    Energy: {energy}')
-        ep_rewards.append(episode_reward)
-        ep_moves.append(moves)
-        ep_traps.append(traps)
-        ep_energy.append(energy)
+            ep_rewards.append(episode_reward)
+            ep_moves.append(moves)
+            ep_traps.append(traps)
+            ep_energy.append(energy)
+    else:
+        for i in tqdm(range(episodes_cnt)):
+            episode_reward, moves, traps, energy = run_episode(render=render, interval=0.01)
+            ep_rewards.append(episode_reward)
+            ep_moves.append(moves)
+            ep_traps.append(traps)
+            ep_energy.append(energy)
 
 
     pygame.quit()
@@ -231,18 +238,14 @@ def plot_experiment_results(ep_rewards, ep_moves, ep_traps, ep_energy, offset):
 
 
 
-# game init
-w, h = 11, 8  # weight and height of game field in squares
-square_size = 100 
-traps_cords_init = [ (2,2), (w-3,1), (w-3,2), (w-2,2), (w-4,5)]
-energy_cords_init = [ (0,0), (w//2,h//2), (w-1,h-1), (4,5)]
+
 
 
 
 
 if len(sys.argv) == 1:
     # algo init
-    episodes_cnt = 1001
+    episodes_cnt = 100
     max_iter = 1000   # maximum possible number of iterations during one episode
     eps = 0.04        # probability to take random action 
     gamma = 1.0      # discount factor
@@ -270,22 +273,35 @@ else:
     raise Exception(f"you should pass 0 or 9 args, you passed {len(sys.argv)-1} args")
 
 
+# game init
+w, h = 11, 8  # weight and height of game field in squares
+square_size = 100 
+
+traps_cords_init = [ (2,2), (w-3,1), (w-3,2), (w-2,2), (w-4,5)]
+energy_cords_init = [ (0,0), (w//2,h//2), (w-1,h-1), (4,5)]
+
+
+def gen_reward_table():
+    reward_table = np.zeros( (w,h) )
+    for i in range(w):
+        for j in range(h):
+            if (i,j) in traps_cords_init:
+                reward_table[i][j] = trap_reward
+            elif (i,j) in energy_cords_init:
+                reward_table[i][j] = energy_reward
+            elif (i,j) == (w-1, 0):
+                reward_table[i][j] = fin_reward
+            else:
+                reward_table[i][j] = step_reward
+    return reward_table
+
+
+reward_table_init = gen_reward_table()
+curr_reward_table = reward_table_init.copy()
+
+
 
 q_table = np.zeros( (w, h, 4) )
-
-reward_table_init = np.zeros( (w,h) )
-for i in range(w):
-    for j in range(h):
-        if (i,j) in traps_cords_init:
-            reward_table_init[i][j] = trap_reward
-        elif (i,j) in energy_cords_init:
-            reward_table_init[i][j] = energy_reward
-        elif (i,j) == (w-1, 0):
-            reward_table_init[i][j] = fin_reward
-        else:
-            reward_table_init[i][j] = step_reward
-
-curr_reward_table = reward_table_init.copy()
 
 ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=False, verbose=False)
 
