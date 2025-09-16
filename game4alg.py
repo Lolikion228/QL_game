@@ -120,6 +120,31 @@ class Env():
         return display_surface, pivo_surf, energy_surf, trap_surf, player_surf, info_surf, clock, font
     
 
+    def initial_state2pic(self):
+        self.display_surface.fill(color=(255, 255, 0))
+
+        for i in range(h):
+            for j in range(w):
+                pygame.draw.rect(self.display_surface,'black',[j*square_size,i*square_size,square_size,square_size], 1)
+
+        self.display_surface.blit(self.pivo_surf, ( (w-1)*square_size, 0))
+
+        for x,y in self.energy_cords:
+            self.display_surface.blit(self.energy_surf, (x * square_size, y*square_size))
+
+        for x,y in self.traps_cords:
+            self.display_surface.blit(self.trap_surf, (x * square_size, y * square_size))
+
+        self.display_surface.blit(self.player_surf, (self.player_x * square_size, self.player_y * square_size))
+        self.display_surface.blit(self.info_surf, (w*square_size, 0))
+
+        for i,(item,name) in enumerate( zip([self.traps_cnt, self.energy_cnt, self.moves, 0], ['traps','energy','moves', 'sum_reward']) ):
+            info = (f'{name}:{ item }')
+            text = self.font.render(info, True, 'white')
+            self.display_surface.blit(text,(w*square_size+20, (i+1)*100))
+
+        pygame.image.save(self.display_surface, "screenshot.png")
+
     def render(self,sum_reward):
         self.display_surface.fill(color=(255, 255, 0))
 
@@ -146,9 +171,9 @@ class Env():
         pygame.display.update()
 
 
-def run_episode(render=False, interval=0.3):
+def run_episode(env, render=False, interval=0.3):
     global curr_reward_table, reward_table_init
-    env = Env(render)
+    
     total_reward = 0
 
     for _ in range(max_iter):
@@ -184,9 +209,15 @@ def run_experiment(render=False, verbose=False):
     ep_traps = []
     ep_energy = []
 
+    env = Env(True)
+    env.initial_state2pic()
+    pygame.display.quit()
+
+
     if verbose:
         for i in range(episodes_cnt):
-            episode_reward, moves, traps, energy = run_episode(render=render, interval=0.01)
+            env = Env(render)
+            episode_reward, moves, traps, energy = run_episode(env, render=render, interval=0.01)
             print(f'----------------episode_{i+1}-----------------  ')
             print(f'    Reward: {episode_reward}')
             print(f'    Moves: {moves}')
@@ -198,7 +229,8 @@ def run_experiment(render=False, verbose=False):
             ep_energy.append(energy)
     else:
         for i in tqdm(range(episodes_cnt)):
-            episode_reward, moves, traps, energy = run_episode(render=render, interval=0.01)
+            env = Env(render)
+            episode_reward, moves, traps, energy = run_episode(env, render=render, interval=0.01)
             ep_rewards.append(episode_reward)
             ep_moves.append(moves)
             ep_traps.append(traps)
@@ -237,18 +269,57 @@ def plot_experiment_results(ep_rewards, ep_moves, ep_traps, ep_energy, offset):
     plt.close()
 
 
+def gen_reward_table():
+    reward_table = np.zeros( (w,h) )
+
+    for i in range(w):
+        for j in range(h):
+            if (i,j) in traps_cords_init:
+                reward_table[i][j] = trap_reward
+            elif (i,j) in energy_cords_init:
+                reward_table[i][j] = energy_reward
+            elif (i,j) == (w-1, 0):
+                reward_table[i][j] = fin_reward
+            else:
+                reward_table[i][j] = step_reward
+                
+    return reward_table
 
 
+def gen_objects(n_traps, n_energy):
+    traps_cords = [ ]
+    energy_cords = [ ]
 
+    for _ in range(n_traps):
+
+        i = np.random.randint(0, w)
+        j = np.random.randint(0, h)
+        while ( (i,j) == (w - 1, 0) ) or ( (i,j) == (0,0) ):
+            i = np.random.randint(0, w)
+            j = np.random.randint(0, h)
+
+        traps_cords.append( (i,j) )
+
+    for _ in range(n_energy):
+
+        i = np.random.randint(0, w)
+        j = np.random.randint(0, h)
+        while (i,j) == (w - 1, 0):
+            i = np.random.randint(0, w)
+            j = np.random.randint(0, h)
+
+        energy_cords.append( (i,j) )
+
+    return traps_cords, energy_cords
 
 
 
 if len(sys.argv) == 1:
     # algo init
-    episodes_cnt = 100
+    episodes_cnt = 1000
     max_iter = 1000   # maximum possible number of iterations during one episode
     eps = 0.04        # probability to take random action 
-    gamma = 1.0      # discount factor
+    gamma = 1.0       # discount factor
     lr = 0.1
 
     trap_reward = -100
@@ -273,29 +344,15 @@ else:
     raise Exception(f"you should pass 0 or 9 args, you passed {len(sys.argv)-1} args")
 
 
+
 # game init
 w, h = 11, 8  # weight and height of game field in squares
 square_size = 100 
 
-traps_cords_init = [ (2,2), (w-3,1), (w-3,2), (w-2,2), (w-4,5)]
-energy_cords_init = [ (0,0), (w//2,h//2), (w-1,h-1), (4,5)]
+# traps_cords_init = [ (2,2), (w-3,1), (w-3,2), (w-2,2), (w-4,5)]
+# energy_cords_init = [ (0,0), (w//2,h//2), (w-1,h-1), (4,5)]
 
-
-def gen_reward_table():
-    reward_table = np.zeros( (w,h) )
-    for i in range(w):
-        for j in range(h):
-            if (i,j) in traps_cords_init:
-                reward_table[i][j] = trap_reward
-            elif (i,j) in energy_cords_init:
-                reward_table[i][j] = energy_reward
-            elif (i,j) == (w-1, 0):
-                reward_table[i][j] = fin_reward
-            else:
-                reward_table[i][j] = step_reward
-    return reward_table
-
-
+traps_cords_init, energy_cords_init = gen_objects(10, 10)
 reward_table_init = gen_reward_table()
 curr_reward_table = reward_table_init.copy()
 
