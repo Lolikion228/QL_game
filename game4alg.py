@@ -3,6 +3,8 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import sys
+import pickle
 
 class Env():
 
@@ -228,23 +230,46 @@ def plot_experiment_results(ep_rewards, ep_moves, ep_traps, ep_energy, offset):
     plt.close()
 
 
+
 # game init
-w, h = 11, 8
-square_size = 100
+w, h = 11, 8  # weight and height of game field in squares
+square_size = 100 
 traps_cords_init = [ (2,2), (w-3,1), (w-3,2), (w-2,2), (w-4,5)]
 energy_cords_init = [ (0,0), (w//2,h//2), (w-1,h-1), (4,5)]
 
 
-episodes_cnt = 200
-max_iter = 1000  # maximum possible number of iterations during one episode
-eps = 0.04        # probability to take random action 
-gamma = 1.0       #  
-lr = 0.5
 
-trap_reward = -100
-energy_reward = 20
-step_reward = -5
-fin_reward = 100
+
+if len(sys.argv) == 1:
+    # algo init
+    episodes_cnt = 1001
+    max_iter = 1000   # maximum possible number of iterations during one episode
+    eps = 0.04        # probability to take random action 
+    gamma = 1.0      # discount factor
+    lr = 0.1
+
+    trap_reward = -100
+    energy_reward = 50
+    step_reward = -5
+    fin_reward = 200
+
+elif len(sys.argv) == 10:
+    # algo init
+    episodes_cnt = int(sys.argv[1])
+    max_iter = int(sys.argv[2])     # maximum possible number of iterations during one episode
+    eps = float(sys.argv[3])        # probability to take random action 
+    gamma = float(sys.argv[4])      # discount factor
+    lr = float(sys.argv[5])
+
+    trap_reward = float(sys.argv[6])
+    energy_reward = float(sys.argv[7])
+    step_reward = float(sys.argv[8])
+    fin_reward = float(sys.argv[9])
+
+else:
+    raise Exception(f"you should pass 0 or 9 args, you passed {len(sys.argv)-1} args")
+
+
 
 q_table = np.zeros( (w, h, 4) )
 
@@ -262,8 +287,11 @@ for i in range(w):
 
 curr_reward_table = reward_table_init.copy()
 
+ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=False, verbose=False)
 
+str_params = map(str,[episodes_cnt, max_iter, eps, gamma, lr, trap_reward, energy_reward, step_reward, fin_reward])
+str_params = '_'.join(str_params)
 
-ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=True, verbose=False)
+with open(f"./logs/{str_params}.pickle", 'wb') as f:
+    pickle.dump( [ep_rewards, ep_moves, ep_traps, ep_energy], f)
 
-plot_experiment_results(ep_rewards, ep_moves, ep_traps, ep_energy, 100)
