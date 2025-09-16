@@ -9,7 +9,6 @@ import pickle
 class Env():
 
     def __init__(self, render):
-
         self.traps_cords = traps_cords_init.copy()
         self.energy_cords = energy_cords_init.copy()
         self.player_x = 0
@@ -22,9 +21,19 @@ class Env():
 
         if self.do_render == True:
             self.display_surface, self.pivo_surf, self.energy_surf, self.trap_surf, \
-            self.player_surf, self.info_surf, self.clock, self.font = self.game_init()
+            self.player_surf, self.info_surf, self.clock, self.font = self.display_init()
+    
+    def reset(self):
+        self.traps_cords = traps_cords_init.copy()
+        self.energy_cords = energy_cords_init.copy()
+        self.player_x = 0
+        self.player_y = h-1
+        self.moves = 0
+        self.traps_cnt = 0
+        self.energy_cnt = 0
+        self.is_done = False
 
-    def step(self, action): #reward, done
+    def step(self, action):
         """
         actions:
         0 - left
@@ -61,36 +70,36 @@ class Env():
                 self.moves += 1
                 return -1.0
 
-        step_reward = None
+        curr_step_reward = None
         for i in range(len(self.traps_cords)):
             if (self.player_x,self.player_y) == self.traps_cords[i]:
                 self.traps_cnt += 1
                 self.traps_cords.pop(i)
-                step_reward = curr_reward_table[self.player_x][self.player_y]
-                curr_reward_table[self.player_x][self.player_y] = -1
+                curr_step_reward = trap_reward
+                curr_reward_table[self.player_x][self.player_y] = step_reward
                 break
 
         for i in range(len(self.energy_cords)):
             if (self.player_x, self.player_y) == self.energy_cords[i]:
                 self.energy_cnt += 1
                 self.energy_cords.pop(i)
-                step_reward = curr_reward_table[self.player_x][self.player_y]
-                curr_reward_table[self.player_x][self.player_y] = -1
+                curr_step_reward = energy_reward
+                curr_reward_table[self.player_x][self.player_y] = step_reward
                 break
 
         if (self.player_x, self.player_y) == (w-1, 0):
-            step_reward = curr_reward_table[self.player_x][self.player_y]
+            curr_step_reward = curr_reward_table[self.player_x][self.player_y]
             self.is_done = True
 
-        if step_reward is None:
-            step_reward = curr_reward_table[self.player_x][self.player_y]
+        if curr_step_reward is None:
+            curr_step_reward = curr_reward_table[self.player_x][self.player_y]
 
-        return step_reward
+        return curr_step_reward
 
     def get_state(self):
         return self.player_x, self.player_y
 
-    def game_init(self):
+    def display_init(self):
 
         pygame.init()
 
@@ -119,33 +128,54 @@ class Env():
 
         return display_surface, pivo_surf, energy_surf, trap_surf, player_surf, info_surf, clock, font
     
-
     def initial_state2pic(self):
-        self.display_surface.fill(color=(255, 255, 0))
+        pygame.font.init()
+        window_w, window_h = w * square_size, h * square_size
+        _display_surface = pygame.Surface((window_w + 400, window_h))
+    
+        info_surf = pygame.Surface( (400,window_h) )
+        info_surf.fill('black')
+
+        player_surf = pygame.image.load('images/player2.png')
+        player_surf = pygame.transform.scale(player_surf, (square_size,square_size) )
+
+        pivo_surf = pygame.image.load('images/pivo.png')
+        pivo_surf = pygame.transform.scale(pivo_surf, (square_size,square_size) )
+
+        energy_surf = pygame.image.load('images/energy.png')
+        energy_surf = pygame.transform.scale(energy_surf, (square_size,square_size) )
+
+        trap_surf = pygame.image.load('images/trap.png')
+        trap_surf = pygame.transform.scale(trap_surf, (square_size,square_size) )
+
+        font = pygame.font.Font('freesansbold.ttf', 32)
+        _display_surface.fill(color=(255, 255, 0))
 
         for i in range(h):
             for j in range(w):
-                pygame.draw.rect(self.display_surface,'black',[j*square_size,i*square_size,square_size,square_size], 1)
+                pygame.draw.rect(_display_surface,'black',[j*square_size,i*square_size,square_size,square_size], 1)
 
-        self.display_surface.blit(self.pivo_surf, ( (w-1)*square_size, 0))
+        _display_surface.blit(pivo_surf, ( (w-1)*square_size, 0))
 
         for x,y in self.energy_cords:
-            self.display_surface.blit(self.energy_surf, (x * square_size, y*square_size))
+            _display_surface.blit(energy_surf, (x * square_size, y*square_size))
 
         for x,y in self.traps_cords:
-            self.display_surface.blit(self.trap_surf, (x * square_size, y * square_size))
+            _display_surface.blit(trap_surf, (x * square_size, y * square_size))
 
-        self.display_surface.blit(self.player_surf, (self.player_x * square_size, self.player_y * square_size))
-        self.display_surface.blit(self.info_surf, (w*square_size, 0))
+        _display_surface.blit(player_surf, (self.player_x * square_size, self.player_y * square_size))
+        _display_surface.blit(info_surf, (w*square_size, 0))
 
         for i,(item,name) in enumerate( zip([self.traps_cnt, self.energy_cnt, self.moves, 0], ['traps','energy','moves', 'sum_reward']) ):
             info = (f'{name}:{ item }')
-            text = self.font.render(info, True, 'white')
-            self.display_surface.blit(text,(w*square_size+20, (i+1)*100))
+            text = font.render(info, True, 'white')
+            _display_surface.blit(text,(w*square_size+20, (i+1)*100))
 
-        pygame.image.save(self.display_surface, "screenshot.png")
+        pygame.image.save(_display_surface, "game_map.png")
+        pygame.quit()
 
-    def render(self,sum_reward):
+    def render(self, sum_reward, ep_num):
+        pygame.display.set_caption(f"episode {ep_num}")
         self.display_surface.fill(color=(255, 255, 0))
 
         for i in range(h):
@@ -171,7 +201,7 @@ class Env():
         pygame.display.update()
 
 
-def run_episode(env, render=False, interval=0.3):
+def run_episode(env, ep_num, render=False, interval=0.3):
     global curr_reward_table, reward_table_init
     
     total_reward = 0
@@ -189,7 +219,7 @@ def run_episode(env, render=False, interval=0.3):
         done = env.is_done
         total_reward += reward
         if render:
-            env.render(total_reward)
+            env.render(total_reward, ep_num)
             time.sleep(interval)
         x_,y_ = env.get_state()
 
@@ -208,16 +238,16 @@ def run_experiment(render=False, verbose=False):
     ep_moves = []
     ep_traps = []
     ep_energy = []
-
-    env = Env(True)
+    
+    env = Env(False)
     env.initial_state2pic()
-    pygame.display.quit()
-
+    
+    env = Env(render)
 
     if verbose:
         for i in range(episodes_cnt):
-            env = Env(render)
-            episode_reward, moves, traps, energy = run_episode(env, render=render, interval=0.01)
+            episode_reward, moves, traps, energy = run_episode(env, i, render=render, interval=0.01)
+            env.reset()
             print(f'----------------episode_{i+1}-----------------  ')
             print(f'    Reward: {episode_reward}')
             print(f'    Moves: {moves}')
@@ -229,8 +259,9 @@ def run_experiment(render=False, verbose=False):
             ep_energy.append(energy)
     else:
         for i in tqdm(range(episodes_cnt)):
-            env = Env(render)
-            episode_reward, moves, traps, energy = run_episode(env, render=render, interval=0.01)
+            
+            episode_reward, moves, traps, energy = run_episode(env, i, render=render, interval=0.01)
+            env.reset()
             ep_rewards.append(episode_reward)
             ep_moves.append(moves)
             ep_traps.append(traps)
@@ -291,7 +322,6 @@ def gen_objects(n_traps, n_energy):
     energy_cords = [ ]
 
     for _ in range(n_traps):
-
         i = np.random.randint(0, w)
         j = np.random.randint(0, h)
         while ( (i,j) == (w - 1, 0) ) or ( (i,j) == (0,0) ):
@@ -301,7 +331,6 @@ def gen_objects(n_traps, n_energy):
         traps_cords.append( (i,j) )
 
     for _ in range(n_energy):
-
         i = np.random.randint(0, w)
         j = np.random.randint(0, h)
         while (i,j) == (w - 1, 0):
@@ -316,13 +345,13 @@ def gen_objects(n_traps, n_energy):
 
 if len(sys.argv) == 1:
     # algo init
-    episodes_cnt = 1000
+    episodes_cnt = 100
     max_iter = 1000   # maximum possible number of iterations during one episode
-    eps = 0.04        # probability to take random action 
+    eps = 0.02        # probability to take random action 
     gamma = 1.0       # discount factor
-    lr = 0.1
+    lr = 0.2
 
-    trap_reward = -100
+    trap_reward = -200
     energy_reward = 50
     step_reward = -5
     fin_reward = 200
@@ -348,19 +377,19 @@ else:
 # game init
 w, h = 11, 8  # weight and height of game field in squares
 square_size = 100 
+n_traps = 15
+n_energy = 15
 
-# traps_cords_init = [ (2,2), (w-3,1), (w-3,2), (w-2,2), (w-4,5)]
-# energy_cords_init = [ (0,0), (w//2,h//2), (w-1,h-1), (4,5)]
 
-traps_cords_init, energy_cords_init = gen_objects(10, 10)
+np.random.seed(41)
+traps_cords_init, energy_cords_init = gen_objects(n_traps, n_energy)
 reward_table_init = gen_reward_table()
 curr_reward_table = reward_table_init.copy()
 
 
-
 q_table = np.zeros( (w, h, 4) )
 
-ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=False, verbose=False)
+ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=True, verbose=False)
 
 str_params = map(str,[episodes_cnt, max_iter, eps, gamma, lr, trap_reward, energy_reward, step_reward, fin_reward])
 str_params = '_'.join(str_params)
