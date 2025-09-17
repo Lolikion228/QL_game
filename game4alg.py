@@ -47,28 +47,28 @@ class Env():
                 self.moves += 1
             else:
                 self.moves += 1
-                return -1.0
+                return step_reward
         elif action == 1:
             if self.player_x < w - 1:
                 self.player_x += 1
                 self.moves += 1
             else:
                 self.moves += 1
-                return -1.0
+                return step_reward
         elif action == 2:
             if self.player_y > 0:
                 self.player_y -= 1
                 self.moves += 1
             else:
                 self.moves += 1
-                return -1.0
+                return step_reward
         elif action == 3:
             if self.player_y < h - 1:
                 self.player_y += 1
                 self.moves += 1
             else:
                 self.moves += 1
-                return -1.0
+                return step_reward
 
         curr_step_reward = None
         for i in range(len(self.traps_cords)):
