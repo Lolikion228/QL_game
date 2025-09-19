@@ -1,3 +1,5 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import numpy as np
 import time
@@ -5,6 +7,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import sys
 import pickle
+
 
 
 class Env():
@@ -395,7 +398,7 @@ q_table = np.zeros( (w, h, 4) )
 
 t0=time.time()
 
-ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=False, verbose=2)
+ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=False, verbose=0)
 
 # str_params = map(str,[episodes_cnt, max_iter, eps, gamma, lr, trap_reward, energy_reward, step_reward, fin_reward])
 # str_params = '_'.join(str_params)
