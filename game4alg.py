@@ -368,14 +368,11 @@ if len(sys.argv) == 1:
     gamma = 1.0       # discount factor
     lr = 0.2
     step_reward = -5
-
 elif len(sys.argv) == 5:
     eps = float(sys.argv[1])        # probability to take random action 
     gamma = float(sys.argv[2])      # discount factor
     lr = float(sys.argv[3])
     step_reward = int(sys.argv[4])
-
-
 else:
     raise Exception(f"you should pass 0 or 4 args, you passed {len(sys.argv)-1} args")
 
