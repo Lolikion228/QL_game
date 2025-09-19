@@ -343,34 +343,29 @@ def gen_objects(n_traps, n_energy):
 
 
 
-if len(sys.argv) == 1:
-    # algo init
-    episodes_cnt = 100
-    max_iter = 1000   # maximum possible number of iterations during one episode
+# algo init
+episodes_cnt = 200
+max_iter = 2000   # maximum possible number of iterations during one episode
+trap_reward = -200
+energy_reward = 50
+fin_reward = 200
+
+
+if len(sys.argv) == 1:    
     eps = 0.02        # probability to take random action 
     gamma = 1.0       # discount factor
     lr = 0.2
-
-    trap_reward = -200
-    energy_reward = 50
     step_reward = -5
-    fin_reward = 200
 
-elif len(sys.argv) == 10:
-    # algo init
-    episodes_cnt = int(sys.argv[1])
-    max_iter = int(sys.argv[2])     # maximum possible number of iterations during one episode
-    eps = float(sys.argv[3])        # probability to take random action 
-    gamma = float(sys.argv[4])      # discount factor
-    lr = float(sys.argv[5])
+elif len(sys.argv) == 5:
+    eps = float(sys.argv[1])        # probability to take random action 
+    gamma = float(sys.argv[2])      # discount factor
+    lr = float(sys.argv[3])
+    step_reward = int(sys.argv[4])
 
-    trap_reward = float(sys.argv[6])
-    energy_reward = float(sys.argv[7])
-    step_reward = float(sys.argv[8])
-    fin_reward = float(sys.argv[9])
 
 else:
-    raise Exception(f"you should pass 0 or 9 args, you passed {len(sys.argv)-1} args")
+    raise Exception(f"you should pass 0 or 4 args, you passed {len(sys.argv)-1} args")
 
 
 
@@ -389,11 +384,19 @@ curr_reward_table = reward_table_init.copy()
 
 q_table = np.zeros( (w, h, 4) )
 
+t0=time.time()
+
 ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=True, verbose=False)
 
-str_params = map(str,[episodes_cnt, max_iter, eps, gamma, lr, trap_reward, energy_reward, step_reward, fin_reward])
-str_params = '_'.join(str_params)
+# str_params = map(str,[episodes_cnt, max_iter, eps, gamma, lr, trap_reward, energy_reward, step_reward, fin_reward])
+# str_params = '_'.join(str_params)
+# with open(f"./logs/{str_params}.pickle", 'wb') as f:
+#     pickle.dump( [ep_rewards, ep_moves, ep_traps, ep_energy], f)
 
-with open(f"./logs/{str_params}.pickle", 'wb') as f:
-    pickle.dump( [ep_rewards, ep_moves, ep_traps, ep_energy], f)
+result = [ [ep_rewards[i], ep_moves[i], ep_traps[i], ep_energy[i]] for i in range(episodes_cnt) ]
+result.sort(key=lambda x:x[0], reverse=True)
+r,m,t,e = result[0]
+print(f"{r} {m} {t} {e} {time.time() - t0}")
+
+
 
