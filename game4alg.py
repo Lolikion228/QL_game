@@ -6,6 +6,7 @@ from tqdm import tqdm
 import sys
 import pickle
 
+
 class Env():
 
     def __init__(self, render):
@@ -233,7 +234,7 @@ def run_episode(env, ep_num, render=False, interval=0.3):
     return total_reward, int(env.moves), int(env.traps_cnt), int(env.energy_cnt)
 
 
-def run_experiment(render=False, verbose=False):
+def run_experiment(render=False, verbose=0):
     ep_rewards = []
     ep_moves = []
     ep_traps = []
@@ -244,11 +245,27 @@ def run_experiment(render=False, verbose=False):
     
     env = Env(render)
 
-    if verbose:
+    if verbose == 0:
         for i in range(episodes_cnt):
             episode_reward, moves, traps, energy = run_episode(env, i, render=render, interval=0.01)
             env.reset()
-            print(f'----------------episode_{i+1}-----------------  ')
+            ep_rewards.append(episode_reward)
+            ep_moves.append(moves)
+            ep_traps.append(traps)
+            ep_energy.append(energy)
+    elif verbose == 1:
+        for i in tqdm(range(episodes_cnt)):
+            episode_reward, moves, traps, energy = run_episode(env, i, render=render, interval=0.01)
+            env.reset()
+            ep_rewards.append(episode_reward)
+            ep_moves.append(moves)
+            ep_traps.append(traps)
+            ep_energy.append(energy)
+    elif verbose == 2:
+        for i in range(episodes_cnt):
+            episode_reward, moves, traps, energy = run_episode(env, i, render=render, interval=0.01)
+            env.reset()
+            print(f'----------------episode {i+1} / {episodes_cnt}-----------------  ')
             print(f'    Reward: {episode_reward}')
             print(f'    Moves: {moves}')
             print(f'    Traps: {traps}')
@@ -258,15 +275,7 @@ def run_experiment(render=False, verbose=False):
             ep_traps.append(traps)
             ep_energy.append(energy)
     else:
-        for i in tqdm(range(episodes_cnt)):
-            
-            episode_reward, moves, traps, energy = run_episode(env, i, render=render, interval=0.01)
-            env.reset()
-            ep_rewards.append(episode_reward)
-            ep_moves.append(moves)
-            ep_traps.append(traps)
-            ep_energy.append(energy)
-
+        raise Exception(f"verbose lvl must be 0 or 1 or 2, found {verbose}")
 
     pygame.quit()
 
@@ -386,7 +395,7 @@ q_table = np.zeros( (w, h, 4) )
 
 t0=time.time()
 
-ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=True, verbose=False)
+ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=False, verbose=2)
 
 # str_params = map(str,[episodes_cnt, max_iter, eps, gamma, lr, trap_reward, energy_reward, step_reward, fin_reward])
 # str_params = '_'.join(str_params)
