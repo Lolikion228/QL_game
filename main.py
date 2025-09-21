@@ -2,10 +2,10 @@ import numpy as np
 import os
 from tqdm import tqdm
 
-eps = [0.001, 0.005, 0.01, 0.05, 0.1]
-gamma = np.linspace(0.1, 1, 10, True)
-lr = np.linspace(1e-2, 1, 10, True)
-step_reward = [-1, -5, -10]
+eps = np.linspace(1e-4, 0.2, 20, True)
+gamma = np.linspace(0.1, 1, 20, True)
+lr = np.linspace(1e-2, 1, 15, True)
+step_reward = np.linspace(-1,-20, 10, True)
 
 
 if os.path.exists('./logs/log.txt'):
