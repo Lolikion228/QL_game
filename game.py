@@ -285,33 +285,6 @@ def run_experiment(render=False, verbose=0):
     return ep_rewards, ep_moves, ep_traps, ep_energy
 
 
-def plot_experiment_results(ep_rewards, ep_moves, ep_traps, ep_energy, offset):
-
-    plt.plot( range(episodes_cnt)[offset:], ep_rewards[offset:] )
-    plt.xlabel('episode')
-    plt.ylabel('episode_summary_reward')
-    plt.show()
-    plt.close()
-
-    plt.plot( range(episodes_cnt)[offset:], ep_moves[offset:] )
-    plt.xlabel('episode')
-    plt.ylabel('episode_moves')
-    plt.show()
-    plt.close()
-
-    plt.scatter( range(episodes_cnt)[offset:], ep_traps[offset:] )
-    plt.xlabel('episode')
-    plt.ylabel('episode_traps')
-    plt.show()
-    plt.close()
-
-    plt.scatter( range(episodes_cnt)[offset:], ep_energy[offset:] )
-    plt.xlabel('episode')
-    plt.ylabel('episode_energy')
-    plt.show()
-    plt.close()
-
-
 def gen_reward_table():
     reward_table = np.zeros( (w,h) )
 
