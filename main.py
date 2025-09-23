@@ -21,6 +21,6 @@ for e in eps:
                 f = open('./logs/log.txt', 'a')
                 f.write(f"{e} {g} {l} {sr} ")
                 f.close()
-                os.system(f"python ./game4alg.py {e} {g} {l} {sr} >> ./logs/log.txt")
+                os.system(f"python ./game.py {e} {g} {l} {sr} >> ./logs/log.txt")
                 pbar.update(1)
 
