@@ -1,4 +1,4 @@
-Using Q-Learning for playing grid-based game.
+Using Q-Learning for playing grid-based game
  =======================
  
  В рамках данного проекта была реализована простая grid-based игра и интерфейс для использования алгоритма Q-обучения c целью её прохождения.\
