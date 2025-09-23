@@ -370,10 +370,6 @@ t0=time.time()
 
 ep_rewards, ep_moves, ep_traps, ep_energy = run_experiment(render=False, verbose=0)
 
-# str_params = map(str,[episodes_cnt, max_iter, eps, gamma, lr, trap_reward, energy_reward, step_reward, fin_reward])
-# str_params = '_'.join(str_params)
-# with open(f"./logs/{str_params}.pickle", 'wb') as f:
-#     pickle.dump( [ep_rewards, ep_moves, ep_traps, ep_energy], f)
 
 result = [ [ep_rewards[i], ep_moves[i], ep_traps[i], ep_energy[i]] for i in range(episodes_cnt) ]
 result.sort(key=lambda x:x[0], reverse=True)
